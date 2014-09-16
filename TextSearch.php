@@ -17,9 +17,9 @@ class TextSearch
     private $message;
 
     /**
-     * @var array $total_occurance
+     * @var array $total_occurrence
      */
-    private $total_occurance = array();
+    private $total_occurrence = array();
 
     /**
      * @var array $word_info
@@ -30,7 +30,7 @@ class TextSearch
      * @param $data
      * @return bool
      */
-    private function calculate_occurance($pattern, $data)
+    private function calculate_occurrence($pattern, $data)
     {
         if($pattern == '' or $data == '')
         {
@@ -43,7 +43,7 @@ class TextSearch
 
         $pattern_length = strlen($data);
         $input_length = strlen($pattern);
-        $this->total_occurance = array();
+        $this->total_occurrence = array();
 
         for ($i = 0; $i < ($pattern_length-$input_length) + 1; $i++) {
             $j = 0;
@@ -51,7 +51,7 @@ class TextSearch
                 $j++;
             }
             if ($j == $input_length){
-                array_push($this->total_occurance,$i);
+                array_push($this->total_occurrence,$i);
             }
         }
     }
@@ -61,10 +61,10 @@ class TextSearch
      * @param $data
      * @return array
      */
-    public function get_total_occurance($pattern, $data)
+    public function get_total_occurrence($pattern, $data)
     {
-        $this->calculate_occurance($pattern,$data);
-        return $this->total_occurance;
+        $this->calculate_occurrence($pattern,$data);
+        return $this->total_occurrence;
     }
 
     /**
@@ -97,7 +97,11 @@ class TextSearch
         return $this->word_info['words_count'];
     }
 
-    public function get_word_length($criteria = 'min')
+	/**
+	 * @param string $criteria
+	 * @return bool|int
+	 */
+	public function get_word_length($criteria = 'min')
     {
         if($this->data == '')
         {
@@ -105,13 +109,14 @@ class TextSearch
             return false;
         }
 
-        $total_words = str_replace('\n\r',' ',$this->data);
+        $total_words = preg_replace('/\r\n|\r|\n/',' ',$this->data);
         $count = 0;
         if($criteria == 'max'){
             $count = strlen(array_reduce(explode(' ',$total_words),
                 function ($k,$v) { return (strlen($k) > strlen($v)) ? $k : $v; }
             ));
         }
+
         if($criteria == 'min')
         {
             $count = strlen(array_reduce(explode(' ',$total_words),
@@ -124,37 +129,75 @@ class TextSearch
         return $count;
     }
 
-    public function get_avarage_word_length()
+	/**
+	 * @return bool|float
+	 */
+	public function get_average_word_length()
     {
-        return 0;
-    }
+		if($this->data == '')
+		{
+			$this->set_message('error','Subject not set');
+			return false;
+		}
 
-    public function get_newline_char_length()
+		$total_words = preg_replace('/\r\n|\r|\n/',' ',$this->data);
+		$words_array = explode(' ',$total_words);
+		$word_lengths = array();
+
+		foreach ($words_array as $word) {
+			array_push($word_lengths,strlen($word));
+		}
+		return (float)array_sum($word_lengths)/ count($word_lengths);
+
+	}
+
+	/**
+	 * @return bool|int
+	 */
+	public function get_newline_char_count()
     {
-        return 0;
+		if($this->data == '')
+		{
+			$this->set_message('error','Subject not set');
+			return false;
+		}
+        return  preg_match_all('/\r\n|\r|\n/',$this->data);
     }
 
     public function get_longest_recurrence()
     {
+		$positions = $this->get_total_occurrence($this->input,$this->data);
+		$prev = '';
+		$reccurrance = array();
+		for($i=0; $i<sizeof($positions); $i++)
+		{
+			if($i==0)
+				$prev = $positions[$i];
+			else{
+				array_push($reccurrance,substr($this->data,$prev,$positions[$i]+(strlen($this->input)-1)));
+			}
+		}
+		$rec = '';
+		foreach ($reccurrance as $reccur) {
+			if(sizeof($rec) < strlen($reccur))
+				$rec = $reccur;
+		}
+		return $rec;
+	}
 
-    }
-    public function get_message()
+	/**
+	 * @return mixed
+	 */
+	public function get_message()
     {
         return $this->message;
     }
-    public function set_message($message)
+
+	/**
+	 * @param $message
+	 */
+	public function set_message($message)
     {
         $this->message = $message;
     }
 }
-
-$rd = new RD();
-//$rd->get_total_occurance('abra','abracadabra');
-
-$subject = 'abraca dabra abr abra cadabra \n abraca dabra abr abra cadabra \n abraca dabra abr abra cadabra \n abraca dabra abr abra cadabra \n abraca dabra abr abra cadabra \n abraca dabra abr abra cadabra \n abraca dabra abr abra cadabra \n abraca dabra abr abra cadabra \n abraca dabra abr abra cadabra \n abraca dabra abr abra cadabra \n abraca dabra abr abra cadabra \n abraca dabra abr abra cadabra \n abraca dabra abr abra cadabra \n abraca dabra abr abra cadabra \n abraca dabra abr abra cadabra \n ';
-
-print_r($rd->get_total_occurance('abra',$subject));
-echo "<br>";
-echo "total words Count: ".$rd->get_total_words() . "<br>";
-echo "Number of letters in the shortest word: ".$rd->get_word_length('min') . "<br>";
-echo "Number of letters in the longest word: ".$rd->get_word_length('max') . "<br>";
