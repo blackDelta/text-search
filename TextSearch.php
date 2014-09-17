@@ -1,5 +1,5 @@
 <?php
-class TextSearch
+class RedundancyDetector
 {
     /**
      * @var $data
@@ -161,12 +161,47 @@ class TextSearch
 			$this->set_message('error','Subject not set');
 			return false;
 		}
-        return  preg_match_all('/\r\n|\r|\n/',$this->data);
+		$this->word_info['return_caret_count'] = 0;
+        return  preg_match_all('/\r\n|\r|\n/',$this->data,$this->word_info['return_caret_count']);
     }
 
-    public function get_longest_recurrence()
+	/**
+	 * @return int
+	 */
+	public function get_longest_recurrence()
+	{
+		$reccurrance = $this->calculate_recurrence();
+		$longest = 0;
+		foreach ($reccurrance as $rec) {
+			if($longest < strlen($rec))
+				$longest = strlen($rec);
+		}
+
+		return $longest;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function get_longest_recurrence_chunk()
     {
-		$positions = $this->get_total_occurrence($this->input,$this->data);
+		$reccurrance = $this->calculate_recurrence();
+		$rec = '';
+		foreach ($reccurrance as $reccur) {
+			if(strlen($rec) < strlen($reccur))
+				$rec = $reccur;
+		}
+
+		return $rec;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function calculate_recurrence()
+	{
+		$data = preg_replace('/\r\n|\r|\n/',' ',$this->data);
+		$positions = $this->get_total_occurrence($this->input,$data);
 		$prev = '';
 		$reccurrance = array();
 		for($i=0; $i<sizeof($positions); $i++)
@@ -174,15 +209,11 @@ class TextSearch
 			if($i==0)
 				$prev = $positions[$i];
 			else{
-				array_push($reccurrance,substr($this->data,$prev,$positions[$i]+(strlen($this->input)-1)));
+				array_push($reccurrance,substr($data,$prev,$positions[$i]+(strlen($this->input)-1)));
+				$prev = $positions[$i];
 			}
 		}
-		$rec = '';
-		foreach ($reccurrance as $reccur) {
-			if(sizeof($rec) < strlen($reccur))
-				$rec = $reccur;
-		}
-		return $rec;
+		return $reccurrance;
 	}
 
 	/**

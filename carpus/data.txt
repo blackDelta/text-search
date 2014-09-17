@@ -1,16 +1,8 @@
-ajljadsf jadskljf kladsfjkljadsfjds fadsjfkladsjfkladsjfkl
-adsf ds
-fads
-f adsf adsfads fadsf
-f adsfadsf sdfads fsdsaf
-abracadabra dsf adsfds fads f
+To change settings from .htaccess files,
+it is also required that the directory permissions configured in Apache allow this.
 
-adsf adsfadsf
- dsf
- adsf
- ds
- f
- ads
- f adsfadsf
-  adsf
-   adsfadsfads fadsf
+The <Directory /foo/bar> entry in httpd.conf MUST contain
+"AllowOverride All" or at least "AllowOverride Options" to read PHP settings from the .htaccess file.
+
+E.g. in Fedora Core 2, the default settings for /var/www/html/
+are "AllowOverride None", so changing PHP settings via .htaccess for applications installed below /var/www/html/ will not work.
