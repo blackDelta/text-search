@@ -1,4 +1,4 @@
 text-search
 ===========
 
-Text Search
+Brute-Force string search algorithm implementation
